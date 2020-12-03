@@ -1,7 +1,48 @@
 @startuml
-Alice -> Bob: Authentication Request
-Bob --> Alice: Authentication Response
+'Alice -> Bob: Authentication Request
+'Bob --> Alice: Authentication Response
+'
+'Alice -> Bob: Another authentication Request
+'Alice <-- Bob: another authentication Response
 
-Alice -> Bob: Another authentication Request
-Alice <-- Bob: another authentication Response
+'阅读页启动流程 文本 TXT
+
+ReaderPageActivity -> ReaderPageActivity: onCreate
+ReaderPageActivity -> ReaderPageActivity: getBookTypeFromIntent \n 确定书籍类型 txt
+'单词拼错至今仍未修改 -_-|| ReaderPageSwitcher
+ReaderPageActivity -> ReaderPageSwither: initView 加载布局 \n 获取 mBookPage 即 ReaderPageSwither
+ReaderPageSwither -> ReaderPageSwither:init
+ReaderPageSwither -> QBookCoreTxt:createBookCore \n根据书籍类型创建不同的 BookCore \n QBookCoreTxt/QBookCoreEPub
+ReaderPageSwither -> PagePaintContextForText:makeReaderPaintContext \n 根据书籍类型创建不同的 PagePaintContext
+ReaderPageActivity -> ReaderPageSwither: setFactory 创建 ReaderTextPageView
+ReaderPageSwither -> ReaderTextPageView: obtainView / addView
+ReaderPageActivity -> ReaderPageActivity: initFromUserConfig 基础配置信息\n（样式、行间距、文字大小等）
+ReaderPageActivity -> ReaderPageActivity: 异步执行 initData 获取 OnlineTag
+ReaderPageActivity -> ReaderPageActivity: 若 onelineTag == null\n指定错误类型 :\n ErrorType.ERROR_TYPE_ONLINE_ERROR_8\nmIsSuccessReaded = false
+ReaderPageActivity -> ReaderPageActivity: 发送 Handler 消息：MESSAGE_OPEN_TXT_FINISHED
+ReaderPageActivity -> ReaderPageActivity: initTxtDataFinished 检查到失败 执行 checkOpenFormat
+ReaderPageActivity -> ReaderPageActivity: 执行 QueryBookIntroTask，成功后发送消息：\nMESSAGE_READPAGE_ONLINE_PULL_OK
+ReaderPageActivity -> ReaderPageActivity: 重新执行 initData
+ReaderPageActivity -> ReaderPageActivity: initOnlineBook 创建 OnlineProvider
+ReaderPageActivity -> OnlineProvider:  创建 OnlineProvider
+ReaderPageActivity -> ReaderPageActivity: 执行 buildOnlineBook 构建:\nQRTxtBook(mCurBook)、ISource(mReaderInput)
+ReaderPageActivity -> ReaderPageActivity: 拉取一些书籍额外信息 大神说 广告等\nBookChapterMoreInfoHandler.buildBookMoreInfo
+ReaderPageActivity -> ReaderPageActivity: fetchOnlineChapter 获取章节信息
+ReaderPageActivity -> OnlineProvider: start() 开始获取章节信息
+OnlineProvider -> OnlineProvider: obtainChapter
+OnlineProvider -> OnlineChapterDownloadTask: 创建下载任务
+OnlineChapterDownloadTask -> OnlineChapterDownloadTask: ReadOnline.readTar(is, tag) \n 解压到本地
+ReaderPageActivity <-- OnlineChapterDownloadTask: 回调 getBookSucces
+ReaderPageActivity -> ReaderPageActivity: MESSAGE_ONLINE_SUCCES
+ReaderPageActivity -> ReaderPageActivity: initOnlineTxtDataFinished
+ReaderPageActivity -> ReaderPageActivity: changePayPageStatus
+ReaderPageActivity -> ReaderPageSwither: setText 设置 ISource
+ReaderPageSwither -> ReaderPageSwither: setInput
+ReaderPageSwither -> QBookCoreTxt: setInput
+QBookCoreTxt -> QBookCoreTxt:  mPageWrapper.setInput(input) \n 通知翻页控制器
+QBookCoreTxt -> QBookCoreTxt:  reBuildCurBuff \n 开始排版
+QBookCoreTxt -> ReaderTextPageView:  invalidate \n 通知绘制
+ReaderTextPageView -> ReaderTextPageView: getAnimationProvider() 获取动画系统
+ReaderTextPageView -> ReaderTextPageView: 完成绘制
+ReaderPageActivity <-- ReaderTextPageView
 @enduml

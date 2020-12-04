@@ -1,0 +1,47 @@
+@startuml
+'Alice -> Bob: Authentication Request
+'Bob --> Alice: Authentication Response
+'
+'Alice -> Bob: Another authentication Request
+'Alice <-- Bob: another authentication Response
+
+'阅读页启动流程 文本 TXT
+
+ReaderPageActivity -> ReaderPageActivity: onCreate
+ReaderPageActivity -> ReaderPageActivity: getBookTypeFromIntent \n 确定书籍类型 Epub
+'单词拼错至今仍未修改 -_-|| ReaderPageSwitcher
+ReaderPageActivity -> ReaderPageSwither: initView 加载布局 \n 获取 mBookPage 即 ReaderPageSwither
+ReaderPageSwither -> ReaderPageSwither:init
+ReaderPageSwither -> QBookCoreEPub:createBookCore \n根据书籍类型创建不同的 BookCore \n QBookCoreTxt/QBookCoreEPub
+ReaderPageSwither -> PagePaintContextForEpub:makeReaderPaintContext \n 根据书籍类型创建不同的 PagePaintContext
+ReaderPageActivity -> ReaderPageSwither: setFactory 创建 ReaderTextPageView
+ReaderPageSwither -> ReaderTextPageView: obtainView / addView
+ReaderPageActivity -> ReaderPageActivity: initFromUserConfig 基础配置信息\n（样式、行间距、文字大小等）
+ReaderPageActivity -> ReaderPageActivity: 异步执行 initData 获取 OnlineTag
+ReaderPageActivity -> ReaderPageActivity: 若 onelineTag == null\n指定错误类型 :\n ErrorType.ERROR_TYPE_ONLINE_ERROR_8\nmIsSuccessReaded = false
+ReaderPageActivity -> ReaderPageActivity: 发送 Handler 消息：MESSAGE_OPEN_TXT_FINISHED
+ReaderPageActivity -> ReaderPageActivity: initTxtDataFinished 检查到失败 执行 checkOpenFormat
+ReaderPageActivity -> ReaderPageActivity: 执行 QueryBookIntroTask，成功后发送消息：\nMESSAGE_READPAGE_ONLINE_PULL_ERROR_AND_FINISH
+ReaderPageActivity -> ReaderPageActivity: finish 当前页面并执行 OpenBook.openBook \n启动一个新的阅读页
+ReaderPageActivity -> ReaderPageActivity: 若 onelineTag != null\n initOnlineBook
+ReaderPageActivity -> ReaderPageActivity: prepareMetaContent 准备Epub MetaContent
+ReaderPageActivity -> EPubMetaContentProcessor: prepareMetaContent 准备Epub MetaContent
+ReaderPageActivity <-- EPubMetaContentProcessor: onMetaContentDownloadSuccess
+ReaderPageActivity -> ReaderPageActivity: MESSAGE_DOWNLOAD_ONLINE_EPUB_CONTENT_OK
+ReaderPageActivity -> ReaderPageActivity: 重新执行 initData
+ReaderPageActivity -> ReaderPageActivity: 执行 buildOnlineBook 构建:\nQRTxtBook(mCurBook)
+ReaderPageActivity -> ReadOnlineEPubInput: 执行 buildOnlineBook 构建:\n、ISource(mReaderInput)
+ReaderPageActivity -> ReaderPageActivity: 拉取一些书籍额外信息 大神说 广告等\nBookChapterMoreInfoHandler.buildBookMoreInfo
+ReaderPageActivity -> ReaderPageSwither: setInput 设置 ReadOnlineEPubInput
+ReaderPageSwither -> QBookCoreEPub: setInput 设置 ReadOnlineEPubInput
+ReaderPageActivity -> ReaderPageActivity: DRMIdentify Drm 鉴权
+ReaderPageActivity -> ReaderPageActivity: 鉴权成功：openEpubBook
+ReaderPageActivity -> ReaderPageActivity: openOnlineEpubBook
+ReaderPageActivity -> QBookCoreEPub: openOnlineBook
+QBookCoreEPub -> ReadOnlineEPubInput: getCurBook
+QBookCoreEPub <-- ReadOnlineEPubInput: 返回 QREPubBook
+QBookCoreEPub -> ReadOnlineEPubInput: openBook
+ReaderPageActivity <-- QBookCoreEPub
+'checkChapterUpdate
+'getChapterList
+@enduml

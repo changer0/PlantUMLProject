@@ -58,5 +58,5 @@ ReaderPageActivity -> ReaderPageActivity: readOnlineBook
 ReaderPageActivity -> ReaderPageActivity: inputOnlineBook
 ReaderPageActivity -> ReaderPageActivity: ...\nmBookpage.getTopPage().invalidate()
 ReaderPageActivity -> PagePaintContextForEpub: 通知绘制
-PagePaintContextForEpub -> PagePaintContextForEpub: 通知阅读引擎绘制\nQEPubKernelSDK.renderPage
+PagePaintContextForEpub -> QEPubKernelSDK: 通知阅读引擎绘制\nQEPubKernelSDK.renderPage
 @enduml

@@ -5,7 +5,7 @@
 'Alice -> Bob: Another authentication Request
 'Alice <-- Bob: another authentication Response
 
-'阅读页启动流程 文本 TXT
+'阅读页启动流程 文本 EPUB
 
 ReaderPageActivity -> ReaderPageActivity: onCreate
 ReaderPageActivity -> ReaderPageActivity: getBookTypeFromIntent \n 确定书籍类型 Epub
@@ -31,6 +31,9 @@ ReaderPageActivity -> ReaderPageActivity: MESSAGE_DOWNLOAD_ONLINE_EPUB_CONTENT_O
 ReaderPageActivity -> ReaderPageActivity: 重新执行 initData
 ReaderPageActivity -> ReaderPageActivity: 执行 buildOnlineBook 构建:\nQRTxtBook(mCurBook)
 ReaderPageActivity -> ReadOnlineEPubInput: 执行 buildOnlineBook 构建:\n、ISource(mReaderInput)
+ReadOnlineEPubInput -> EPubSingleInput: 创建 EPubSingleInput
+ReadOnlineEPubInput -> OnlineEPubBookParser: 创建 OnlineEPubBookParser
+EPubSingleInput <-- OnlineEPubBookParser: 传递给 EPubSingleInput
 ReaderPageActivity -> ReaderPageActivity: 拉取一些书籍额外信息 大神说 广告等\nBookChapterMoreInfoHandler.buildBookMoreInfo
 ReaderPageActivity -> ReaderPageSwither: setInput 设置 ReadOnlineEPubInput
 ReaderPageSwither -> QBookCoreEPub: setInput 设置 ReadOnlineEPubInput
@@ -41,7 +44,19 @@ ReaderPageActivity -> QBookCoreEPub: openOnlineBook
 QBookCoreEPub -> ReadOnlineEPubInput: getCurBook
 QBookCoreEPub <-- ReadOnlineEPubInput: 返回 QREPubBook
 QBookCoreEPub -> ReadOnlineEPubInput: openBook
+ReadOnlineEPubInput -> EPubSingleInput: openBook
+ReadOnlineEPubInput -> OnlineEPubBookParser: parseBook
+OnlineEPubBookParser -> OnlineEPubBookParser: openBook
+OnlineEPubBookParser -> QEPubKernelSDK: openOnlineChapterBook
+OnlineEPubBookParser <-- QEPubKernelSDK
+ReadOnlineEPubInput <-- OnlineEPubBookParser
+QBookCoreEPub <-- ReadOnlineEPubInput
+
 ReaderPageActivity <-- QBookCoreEPub
-'checkChapterUpdate
-'getChapterList
+ReaderPageActivity -> ReaderPageActivity: MESSAGE_PARSE_ONLINE_EPUB_BOOK
+ReaderPageActivity -> ReaderPageActivity: readOnlineBook
+ReaderPageActivity -> ReaderPageActivity: inputOnlineBook
+ReaderPageActivity -> ReaderPageActivity: ...\nmBookpage.getTopPage().invalidate()
+ReaderPageActivity -> PagePaintContextForEpub: 通知绘制
+PagePaintContextForEpub -> PagePaintContextForEpub: 通知阅读引擎绘制\nQEPubKernelSDK.renderPage
 @enduml
